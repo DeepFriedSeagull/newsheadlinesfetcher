@@ -69,14 +69,14 @@ def run():
 
 @app.route('/run/<command>')
 def run2(command):
-	result = getattr(livefetch,command)
+	result = getattr(livefetch,command)()
 	return redirect('/',302,None)
+
 
 @app.route('/')
 def main():
 	# flash('Testing FLASH FLASK')	
 	images = mongo.db.articlesCollection.find({}, {"top_image":1, "_id":1, "local_top_image":1, "url":1} ).sort("_id", -1)
-
 	return render_template('main.html', images=images)
 
 

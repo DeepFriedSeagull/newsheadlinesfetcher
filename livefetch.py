@@ -14,7 +14,6 @@ from pymongo import MongoClient
 
 class Soup_Parser():
 
-
 	def __init__(self, tag_names, class_names=[], id_names=[]):
 		self.tag_names = tag_names
 		self.id_names = id_names
@@ -97,6 +96,7 @@ class Website():
 				"title": article.title,
 				# "images": arcticle.images,
 				"top_image" : article.top_image,
+				"local_top_image" : get_imagedb_local_path(article.top_image),
 				# "date_of_publication" :,
 				"time_of_insert_iso" : datetime.datetime.now().isoformat(),
 				"summary": article.summary,
@@ -110,10 +110,14 @@ class Website():
 			# print("Article already in the db: " + exist_article["title"])
 			pass
 
-def fetch_image( remote_path):
+def get_imagedb_local_path( remote_path ):
 	image_local_path = os.path.basename( urlparse(remote_path).path )
 	image_local_path = os.path.join("images_db", image_local_path)
 	image_local_path = os.path.join("static", image_local_path)
+	return image_local_path
+
+def fetch_image( remote_path ):
+	image_local_path = get_imagedb_local_path(remote_path)
 	if (not os.path.isfile(image_local_path)):
 		r = requests.get(remote_path, stream=True)
 		if r.status_code == 200:
@@ -134,10 +138,7 @@ def add_local_path():
 	print("Adding local path: START")
 	articles = Website.articles_collection.find({})
 	for  article in articles:
-		image_local_path = os.path.basename( urlparse(article["top_image"]).path )
-		image_local_path = os.path.join("images_db", image_local_path)
-		image_local_path = os.path.join("static", image_local_path)
-		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image":image_local_path}})
+		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
 	print("Adding local path: END")
 
 def main_exec():
