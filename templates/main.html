@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>My Webpage</title>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+	<h1>My Webpage</h1>
+	{% for message in get_flashed_messages() %}
+		<div class=flash>{{ message }}</div>
+	{% endfor %}
+
+	<div id="gallery_images">
+	{% for image in images %}
+		<div overflow="hidden">
+			<a href="{{image.url}}">
+				<img src="{{ image.local_top_image }}" alt="{{image.title}}" width="150px" height="75px" >
+			</a>
+		</div>
+	{% endfor %}
+	</div>
+
+
+</div>

@@ -1,0 +1,10 @@
+
+dev/
+
+__pycache__/
+
+static/images_db/
+
+newsheadlinesfetcher\.sublime-project
+
+newsheadlinesfetcher\.sublime-workspace
