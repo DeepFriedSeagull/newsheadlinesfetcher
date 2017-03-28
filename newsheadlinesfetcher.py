@@ -67,6 +67,11 @@ def run():
 	return redirect('/',302,None)
 
 
+@app.route('/run/<command>')
+def run2(command):
+	result = getattr(livefetch,command)
+	return redirect('/',302,None)
+
 @app.route('/')
 def main():
 	# flash('Testing FLASH FLASK')	
