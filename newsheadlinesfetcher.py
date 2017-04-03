@@ -4,7 +4,7 @@ import datetime
 import os
 
 from urllib.parse import urlparse
-from flask import Flask, render_template, flash, redirect
+from flask import Flask, render_template, flash, redirect, send_from_directory
 from flask.ext.pymongo import PyMongo
 import livefetch
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -26,9 +26,14 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 # from flask_pymongo import Pymongo
 
-app = Flask(__name__)
+app = Flask(__name__,static_folder='',static_path='')
 app.config["MONGO_DBNAME"]="livefetch"
 mongo = PyMongo(app)
+
+
+@app.route('/log/')
+def log():
+	return send_from_directory( '', 'nohup.out', mimetype='text/txt' )
 
 
 @app.route('/newspaper/<newspaper>')
