@@ -21,21 +21,21 @@ class Soup_Parser():
 		self.class_names = class_names
 
 	def parse(self, main_page_soup, site_url):
-		arcticle_top = main_page_soup
+		article_top = main_page_soup
 
 		for tag_name, id_name, class_name in itertools.zip_longest(self.tag_names, self.id_names, self.class_names):
 			# print (tag_name, id_name, class_name)
-			# print( arcticle_top )
+			# print( article_top )
 
 
 			# if ( id_name and class_name):
-			# 	arcticle_top = arcticle_top.find(tag_name, id=id_name, class_=class_name)
+			# 	article_top = article_top.find(tag_name, id=id_name, class_=class_name)
 			# elif (id_name):
-			# 	arcticle_top = arcticle_top.find(tag_name, id=id_name)
+			# 	article_top = article_top.find(tag_name, id=id_name)
 			# elif (class_name):	
-			# 	arcticle_top = arcticle_top.find(tag_name, class_=class_name)
+			# 	article_top = article_top.find(tag_name, class_=class_name)
 			# else:
-			# 	arcticle_top = arcticle_top.find(tag_name)
+			# 	article_top = article_top.find(tag_name)
 
 			find_attributes={}
 			if id_name is not None:
@@ -43,18 +43,18 @@ class Soup_Parser():
 			if class_name is not None:
 				find_attributes.update({"class":class_name}) 
 
-			arcticle_top = arcticle_top.find(tag_name, attrs=find_attributes)
+			article_top = article_top.find(tag_name, attrs=find_attributes)
 
 			# print( "done" )
-			# print( arcticle_top )
+			# print( article_top )
 			# print( "done2" )
 
-		arcticle_top_url = arcticle_top.find("a")['href']
+		article_top_url = article_top.find("a")['href']
 
-		if (arcticle_top_url[:4] != "http" ):
-			arcticle_top_url = site_url+arcticle_top_url
+		if (article_top_url[:4] != "http" ):
+			article_top_url = site_url+article_top_url
 
-		return   arcticle_top_url
+		return article_top_url
 
 class Website():
 	# Class variable :ie shared
@@ -62,6 +62,7 @@ class Website():
 	db = clientMongo.livefetch
 	images_collection = db.imagesCollection
 	articles_collection = db.articlesCollection
+	thumbnail_size = (150, 150)
 
 	def __init__(self, newspaper_name, site_url, parser ):
 		self.newspaper_name = newspaper_name
@@ -93,10 +94,10 @@ class Website():
 				"text" : article.text,
 				"authors" : article.authors,
 				"title": article.title,
-				# "images": arcticle.images,
+				# "images": article.images,
 				"top_image" : article.top_image,
 				"local_top_image" : get_imagedb_local_path(article.top_image),
-				"local_thumbnail" : get_imagedb_local_thumbnail_path(arcticle.top_image),
+				"local_thumbnail" : get_imagedb_local_thumbnail_path(article.top_image),
 				# "date_of_publication" :,
 				"time_of_insert_iso" : datetime.datetime.now().isoformat(),
 				"summary": article.summary,
@@ -105,20 +106,24 @@ class Website():
 
 			print("Adding and Fetching: " + article.title)
 			self.articles_collection.insert_one(newArticle)
+
 			fetch_image ( article.top_image )
+			create_thumbnail ( article.top_image )
+
 		else:
 			# print("Article already in the db: " + exist_article["title"])
 			pass
 
 def get_imagedb_local_path( remote_path ):
 	image_local_path = os.path.basename( urlparse(remote_path).path )
-	image_local_path = os.path.join("images_db", image_local_path)
-	image_local_path = os.path.join("static", image_local_path)
+	image_local_path = os.path.join("static", "images_db", image_local_path)
 	return image_local_path
 
 def get_imagedb_local_thumbnail_path( remote_path ):
 	thumbnail_path = os.path.splitext( os.path.basename( urlparse(remote_path).path ))[0]+ ".png"
-	thumbnail_path = os.path.join("static", "images_db", "150x150", thumbnail_path)
+	size_folder = 'x'.join(map(str, Website.thumbnail_size))
+	destination_folder = os.path.join( "static", "images_db", size_folder )
+	thumbnail_path = os.path.join(destination_folder, thumbnail_path)
 	return thumbnail_path
 
 
@@ -134,6 +139,18 @@ def fetch_image( remote_path ):
 	else:
 		# print("File already downloaded")
 		pass
+
+def create_thumbnail(remote_path):
+	infile = get_imagedb_local_path(remote_path)
+	outfile = get_imagedb_local_thumbnail_path(remote_path)
+	if (not os.path.isfile(outfile) ):
+		try:
+			im = Image.open(infile)
+			im.thumbnail(Website.thumbnail_size)
+			im.save(outfile, "PNG")
+		except IOError:
+			print("cannot create thumbnail for", infile)
+
 
 def fecth_images_from_db():
 	articles = Website.articles_collection.find({})
@@ -158,7 +175,7 @@ def add_local_thumbnails():
 def main_exec():
 	websites = [
 		# Press Payante
-		Website( "Le Monde", "http://mobile.lemonde.fr", Soup_Parser(["article"], ["une"]) ),
+		Website( "Le Monde", "http://mobile.lemonde.fr", Soup_Parser(["main"]) ),
 		Website( "Le Figaro", "http://www.lefigaro.fr", Soup_Parser(["section"]) ),
 		Website( "Le Parisien", "http://m.leparisien.fr", Soup_Parser(["article"]) ),
 		Website( "Les Echos", "http://www.lesechos.fr", Soup_Parser(["article"]) ),
@@ -183,31 +200,28 @@ def main_exec():
 	]
 
 	for website in websites:
-		try:
+		# try:
 			website.fetch_main_article()
-		except Exception as e:
-			print("Problem with " + website.newspaper_name)
-			print (str(e))
+		# except Exception as e:
+		# 	print("Problem with " + website.newspaper_name)
+		# 	print (str(e))
 
-def create_thumbnails():
-	#for e
-	size = (150, 150)
-
+def create_thumbnails(size):
 	origin_folder = os.path.join("static", "images_db")
 
 	in_files = [f for f in os.listdir(origin_folder) if os.path.isfile(os.path.join(origin_folder, f))]
 
+	size_folder = 'x'.join(map(str, size))
+	destination_folder = os.path.join( "static", "images_db", size_folder )
 
-	destination_folder = os.path.join("static", "images_db", "150x150")
+	#if folder doesn't exist, create it
+	if (os.path.isdir(destination_folder) is False):
+		print( "Creating: " + destination_folder)
+		os.makedirs( destination_folder )
 
 	for infile in in_files:
 		infile = os.path.join(origin_folder, infile)
-		# outfile = os.path.join(destination_folder, os.path.splitext(infile)[0] + ".png")
-		# outfile =  os.path.splitext(infile)[0]
 		outfile = os.path.join(destination_folder, os.path.splitext(os.path.basename(infile))[0]+ ".png")
-
-		# print("infile: "+infile)
-		# print("outfile: "+outfile)
 
 		if infile != outfile:
 			try:
@@ -216,6 +230,12 @@ def create_thumbnails():
 				im.save(outfile, "PNG")
 			except IOError:
 				print("cannot create thumbnail for", infile)
+
+def create_thumbnails_150():
+	create_thumbnails((150,150))
+
+def create_thumbnails_120():
+	create_thumbnails((120,120))
 
 if __name__ == "__main__":
 	add_local_thumbnails()
