@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from newspaper import Article
 from pymongo import MongoClient
+from PIL import Image
 
 
 class Soup_Parser():
@@ -55,9 +56,7 @@ class Soup_Parser():
 
 		return   arcticle_top_url
 
-
 class Website():
-
 	# Class variable :ie shared
 	clientMongo = MongoClient('localhost', 27017)
 	db = clientMongo.livefetch
@@ -97,6 +96,7 @@ class Website():
 				# "images": arcticle.images,
 				"top_image" : article.top_image,
 				"local_top_image" : get_imagedb_local_path(article.top_image),
+				"local_thumbnail" : get_imagedb_local_thumbnail_path(arcticle.top_image),
 				# "date_of_publication" :,
 				"time_of_insert_iso" : datetime.datetime.now().isoformat(),
 				"summary": article.summary,
@@ -115,6 +115,12 @@ def get_imagedb_local_path( remote_path ):
 	image_local_path = os.path.join("images_db", image_local_path)
 	image_local_path = os.path.join("static", image_local_path)
 	return image_local_path
+
+def get_imagedb_local_thumbnail_path( remote_path ):
+	thumbnail_path = os.path.splitext( os.path.basename( urlparse(remote_path).path ))[0]+ ".png"
+	thumbnail_path = os.path.join("static", "images_db", "150x150", thumbnail_path)
+	return thumbnail_path
+
 
 def fetch_image( remote_path ):
 	image_local_path = get_imagedb_local_path(remote_path)
@@ -137,9 +143,17 @@ def fecth_images_from_db():
 def add_local_path():
 	print("Adding local path: START")
 	articles = Website.articles_collection.find({})
-	for  article in articles:
+	for article in articles:
 		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
 	print("Adding local path: END")
+
+def add_local_thumbnails():
+	print("Adding local thumbnail path: START")
+	articles = Website.articles_collection.find({})
+	for article in articles:
+		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
+	print("Adding local thumbnail path: END")
+
 
 def main_exec():
 	websites = [
@@ -175,6 +189,33 @@ def main_exec():
 			print("Problem with " + website.newspaper_name)
 			print (str(e))
 
+def create_thumbnails():
+	#for e
+	size = (150, 150)
+
+	origin_folder = os.path.join("static", "images_db")
+
+	in_files = [f for f in os.listdir(origin_folder) if os.path.isfile(os.path.join(origin_folder, f))]
+
+
+	destination_folder = os.path.join("static", "images_db", "150x150")
+
+	for infile in in_files:
+		infile = os.path.join(origin_folder, infile)
+		# outfile = os.path.join(destination_folder, os.path.splitext(infile)[0] + ".png")
+		# outfile =  os.path.splitext(infile)[0]
+		outfile = os.path.join(destination_folder, os.path.splitext(os.path.basename(infile))[0]+ ".png")
+
+		# print("infile: "+infile)
+		# print("outfile: "+outfile)
+
+		if infile != outfile:
+			try:
+				im = Image.open(infile)
+				im.thumbnail(size)
+				im.save(outfile, "PNG")
+			except IOError:
+				print("cannot create thumbnail for", infile)
 
 if __name__ == "__main__":
-	add_local_path()
+	add_local_thumbnails()

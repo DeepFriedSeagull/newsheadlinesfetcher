@@ -4,7 +4,7 @@ import datetime
 import os
 
 from urllib.parse import urlparse
-from flask import Flask, render_template, flash, redirect, send_from_directory
+from flask import Flask, render_template, flash, redirect, request, send_from_directory
 from flask.ext.pymongo import PyMongo
 import livefetch
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -71,17 +71,25 @@ def run():
 	livefetch.main_exec()
 	return redirect('/',302,None)
 
-
+# http://localhost:5000/run/fetch_image?param=https://www.mediapart.fr/journal/international/290317/brexit-les-grands-travaux-ne-font-que-commencer
 @app.route('/run/<command>')
 def run2(command):
-	result = getattr(livefetch,command)()
+	param=request.args.get('param')
+	print( param )
+	if param is not None:
+		result = getattr(livefetch,command)(param)
+	else:
+		result = getattr(livefetch,command)()
+
 	return redirect('/',302,None)
 
 
 @app.route('/')
 def main():
 	# flash('Testing FLASH FLASK')	
-	images = mongo.db.articlesCollection.find({}, {"top_image":1, "_id":1, "local_top_image":1, "url":1} ).sort("_id", -1)
+	images = mongo.db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
+	# images = list(images)
+
 	return render_template('main.html', images=images)
 
 

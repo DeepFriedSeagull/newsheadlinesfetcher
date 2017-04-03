@@ -14,7 +14,7 @@
 	{% for image in images %}
 		<div overflow="hidden">
 			<a href="{{image.url}}">
-				<img src="{{ image.local_top_image }}" alt="{{image.title}}" width="150px" height="75px" >
+				<img src="{{ image.local_thumbnail }}" alt="{{image.title}}" width="150px" height="75px" >
 			</a>
 		</div>
 	{% endfor %}
