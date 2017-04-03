@@ -200,11 +200,11 @@ def main_exec():
 	]
 
 	for website in websites:
-		# try:
+		try:
 			website.fetch_main_article()
-		# except Exception as e:
-		# 	print("Problem with " + website.newspaper_name)
-		# 	print (str(e))
+		except Exception as e:
+			print("Problem with " + website.newspaper_name)
+			print (str(e))
 
 def create_thumbnails(size):
 	origin_folder = os.path.join("static", "images_db")
