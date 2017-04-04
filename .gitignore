@@ -10,3 +10,7 @@ newsheadlinesfetcher\.sublime-project
 newsheadlinesfetcher\.sublime-workspace
 
 nohup.out
+
+mongod.log*
+
+flask.log*

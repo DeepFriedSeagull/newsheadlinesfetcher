@@ -31,9 +31,9 @@ app.config["MONGO_DBNAME"]="livefetch"
 mongo = PyMongo(app)
 
 
-@app.route('/log/')
-def log():
-	return send_from_directory( '', 'nohup.out', mimetype='text/txt' )
+@app.route('/log/<name>')
+def log(name):
+	return send_from_directory( '', name, mimetype='text/txt' )
 
 
 @app.route('/newspaper/<newspaper>')
