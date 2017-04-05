@@ -1,5 +1,8 @@
 #!/bin/bash
-nohup mongod --dbpath="/root/work/mongodb" &
+current_time=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
+ln -sf mongod.log.$current_time  mongod.log
+ln -sf flask.log.$current_time flask.log
+nohup mongod --config ./mongod.conf --logpath mongod.log.$current_time </dev/null >/dev/null 2>&1 &
 export FLASK_APP=newsheadlinesfetcher.py
-export FLASK_DEBUG=1
-source dev/bin/activate ; nohup python -m flask run &
+# export FLASK_DEBUG=1
+source dev/bin/activate ; nohup python -m flask run >flask.log.$current_time 2>&1 &
