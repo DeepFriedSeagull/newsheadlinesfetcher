@@ -26,8 +26,9 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 # from flask_pymongo import Pymongo
 
-app = Flask(__name__,static_folder='',static_path='')
+app = Flask(__name__,static_folder='static',static_path='')
 app.config["MONGO_DBNAME"]="livefetch"
+app.secret_key = 'dZjBgu6vwAH5z16q1DygCSsvPbsPzqL89GNY7Oyj7e3vyg4ORrhoxiq6AJhtjKJ9'
 mongo = PyMongo(app)
 
 
@@ -39,8 +40,8 @@ def log(name):
 @app.route('/newspaper/<newspaper>')
 def newspaper(newspaper):
 	images = mongo.db.articlesCollection.find({"origin":newspaper}, 
-		{"top_image":1, "_id":0, "url":1, "title":1 } ).sort("_id", -1)
-	return render_template('main.html', images=images)
+		{"local_thumbnail":1, "_id":0, "url":1, "title":1 } ).sort("_id", -1)
+	return render_template('newspaper.html', images=images, newspaper_name=newspaper)
 
 # http://127.0.0.1:5000/2017/03/22
 @app.route('/<int:year>/')
@@ -88,15 +89,15 @@ def run2(command):
 def main():
 	# flash('Testing FLASH FLASK')	
 	images = mongo.db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
-	# images = list(images)
-
-	return render_template('main.html', images=images)
+	newspapers = mongo.db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
+	return render_template('main.html', images=images, newspapers=newspapers)
 
 
 def fetch_start():
 	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))
 	livefetch.main_exec()
 	print(time.strftime("Finishing Fetching: %A, %d. %B %Y %I:%M:%S %p"))
+	# flash( time.strftime("Last Update: %I:%M:%S"))
 	
 
 scheduler = BackgroundScheduler()

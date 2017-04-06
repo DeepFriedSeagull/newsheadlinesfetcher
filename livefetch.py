@@ -14,7 +14,6 @@ from PIL import Image
 
 
 class Soup_Parser():
-
 	def __init__(self, tag_names, class_names=[], id_names=[]):
 		self.tag_names = tag_names
 		self.id_names = id_names
@@ -62,12 +61,16 @@ class Website():
 	db = clientMongo.livefetch
 	images_collection = db.imagesCollection
 	articles_collection = db.articlesCollection
+	newspapers_collection = db.newspapersCollection
 	thumbnail_size = (150, 150)
 
 	def __init__(self, newspaper_name, site_url, parser ):
 		self.newspaper_name = newspaper_name
 		self.site_url = site_url
 		self.parser = parser
+		# adding newspaper if not found in db
+		if (self.newspapers_collection.find_one({"name":newspaper_name}) is None):
+			self.newspapers_collection.insert_one({"name":newspaper_name, "url":site_url})
 
 	def fetch_main_article(self):
 		print ("Fetching: ", self.newspaper_name)
@@ -116,19 +119,20 @@ class Website():
 
 def get_imagedb_local_path( remote_path ):
 	image_local_path = os.path.basename( urlparse(remote_path).path )
-	image_local_path = os.path.join("static", "images_db", image_local_path)
+	image_local_path = os.path.join( "images_db", image_local_path)
 	return image_local_path
 
 def get_imagedb_local_thumbnail_path( remote_path ):
 	thumbnail_path = os.path.splitext( os.path.basename( urlparse(remote_path).path ))[0]+ ".png"
 	size_folder = 'x'.join(map(str, Website.thumbnail_size))
-	destination_folder = os.path.join( "static", "images_db", size_folder )
+	destination_folder = os.path.join( "images_db", size_folder )
 	thumbnail_path = os.path.join(destination_folder, thumbnail_path)
 	return thumbnail_path
 
 
 def fetch_image( remote_path ):
 	image_local_path = get_imagedb_local_path(remote_path)
+	image_local_path = os.path.join( "static", image_local_path)
 	if (not os.path.isfile(image_local_path)):
 		r = requests.get(remote_path, stream=True)
 		if r.status_code == 200:
@@ -141,8 +145,8 @@ def fetch_image( remote_path ):
 		pass
 
 def create_thumbnail(remote_path):
-	infile = get_imagedb_local_path(remote_path)
-	outfile = get_imagedb_local_thumbnail_path(remote_path)
+	infile = os.path.join( "static", get_imagedb_local_path(remote_path))
+	outfile = os.path.join( "static", get_imagedb_local_thumbnail_path(remote_path))
 	if (not os.path.isfile(outfile) ):
 		try:
 			im = Image.open(infile)
@@ -171,6 +175,10 @@ def add_local_thumbnails():
 		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
 	print("Adding local thumbnail path: END")
 
+
+def remove_static_from_db():
+	add_local_path()
+	add_local_thumbnails()
 
 def main_exec():
 	websites = [
@@ -238,4 +246,4 @@ def create_thumbnails_120():
 	create_thumbnails((120,120))
 
 if __name__ == "__main__":
-	add_local_thumbnails()
+	remove_static_from_db()

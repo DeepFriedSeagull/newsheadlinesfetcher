@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>My Webpage</title>
-	<link rel=stylesheet type=text/css href="static{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-	<h1>My Webpage</h1>
+	<h1>New Headline Fetcher{% block title %}{% endblock %}</h1>
+
+	{% block flash_messages %}
 	{% for message in get_flashed_messages() %}
 		<div class=flash>{{ message }}</div>
 	{% endfor %}
+	{% endblock flash_messages %}
 
-	<div id="wordcloud">
-		<img src="static/img/wordcloud.png">
-	</div>
 
-	<div id="gallery_images">
-	{% for image in images %}
-		<div overflow="hidden">
-			<a href="{{image.url}}">
-				<img src="{{ image.local_thumbnail }}" alt="{{image.title}}" width="150px" height="75px" >
+	{% block newspapers %}
+	<div id="newspapers">
+	{%for newspaper in newspapers%}
+		<div>
+			<a href="/newspaper/{{newspaper.name}}">
+				{{newspaper.name}}
 			</a>
 		</div>
 	{% endfor %}
 	</div>
+	{% endblock newspapers %}
+	
 
+	{% block wordcloud %}
+	<div id="wordcloud">
+		<img src="{{ url_for('static', filename='img/wordcloud.png') }}">
+	</div>
+	{% endblock wordcloud %}
+
+
+	{% block gallery_images %}
+	<div id="gallery_images">
+	{% for image in images %}
+		<div overflow="hidden">
+			<a href="{{image.url}}">
+				<img src="{{url_for('static', filename='')}}{{image.local_thumbnail|safe }}" alt="{{image.title}}" width="150px" height="75px" >
+			</a>
+		</div>
+	{% endfor %}
+	</div>
+	{% endblock gallery_images%}
 
 </div>
