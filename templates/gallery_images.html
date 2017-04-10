@@ -1,0 +1,13 @@
+	{% for image in images %}
+		<div overflow="hidden">
+			<a href="{{image.url}}">
+				<img src="{{url_for('static', filename='')}}{{image.local_thumbnail|safe }}" alt="{{image.title}}" width="150px" height="75px" >
+			</a>
+		</div>
+	{% endfor %}
+	<span start_date="{{start_date}}"></span>
+	{% if next_start_date|string() != "" %}
+	<span id="next_start_date" next_start_date="{{next_start_date}}"></span>
+	{% endif %}
+	<!-- <a href="/articles?Count=10&StartDate={{next_start_date}}">Next</a> -->
+	<!-- <div id="next_images"></div> -->

@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>New Headline Fetcher</title>
-
-	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+	<title>News Headline Fetcher</title>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/style.css') }}">
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap-3.3.7.min.css') }}">
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap-3.3.7-theme.min.css') }}">
 </head>
 <body>
-	<h1>New Headline Fetcher{% block title %}{% endblock %}</h1>
+	<h1>News Headline Fetcher{% block title %}{% endblock %}</h1>
 
 	{% block flash_messages %}
 	{% for message in get_flashed_messages() %}
-		<div class=flash>{{ message }}</div>
+		<div id=flash_messages>
+			<div class="alert alert-warning alert-dismissible fade in" role="alert">
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				{{ message }}
+			</div>
+		</div>
 	{% endfor %}
 	{% endblock flash_messages %}
 
@@ -35,16 +43,46 @@
 	{% endblock wordcloud %}
 
 
-	{% block gallery_images %}
 	<div id="gallery_images">
-	{% for image in images %}
-		<div overflow="hidden">
-			<a href="{{image.url}}">
-				<img src="{{url_for('static', filename='')}}{{image.local_thumbnail|safe }}" alt="{{image.title}}" width="150px" height="75px" >
-			</a>
-		</div>
-	{% endfor %}
+		{% block gallery_images %}
+		<span id="next_start_date" next_start_date="{{next_start_date}}"></span>
+		{% endblock gallery_images%}
 	</div>
-	{% endblock gallery_images%}
+
+	<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.2.0.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap-3.3.7.min.js') }}"></script>
+
+	<script type="text/javascript">
+		var currently_updating = true;
+
+		function performAJAX() {
+			next_start_date = $("#next_start_date").attr("next_start_date");
+			if ( next_start_date ) {
+				currently_updating = true;
+				$.ajax( {context: this, url:"/articles?StartDate="+next_start_date,success:function(result) {
+					$("#start_date").remove();
+					$("#next_start_date").remove();
+					$(result).appendTo("#gallery_images");
+					console.log("ajax done")
+					this.currently_updating = false;
+				}});
+			}
+		}
+
+		$(document).ready (function(){
+			$("#flash_messages").slideUp();
+			performAJAX();
+		});
+
+		$(window).on('scroll', function(){
+			var scrollTop = $(window).scrollTop();
+			var bodyHeight = $(document).height() - $(window).height();
+			var scrollPercentage = scrollTop / bodyHeight;
+
+			if(  scrollPercentage > 0.8  && !currently_updating) {
+				performAJAX();
+			}
+		}).scroll();
+	</script>
 
 </div>

@@ -1,8 +1,8 @@
 import time
 import atexit
-import datetime
 import os
 
+from datetime import datetime
 from urllib.parse import urlparse
 from flask import Flask, render_template, flash, redirect, request, send_from_directory
 from flask.ext.pymongo import PyMongo
@@ -50,13 +50,13 @@ def newspaper(newspaper):
 def per_date(year,month=-1,day=-1):
 
 	if month == -1:
-		selected_date = datetime.datetime(year, 1, 1)
+		selected_date = datetime(year, 1, 1)
 		the_day_after = selected_date + datetime.timedelta(years=1)
 	elif day == -1:
-		selected_date = datetime.datetime(year, month, 1)
+		selected_date = datetime(year, month, 1)
 		the_day_after = selected_date + datetime.timedelta(months=1)
 	else:
-		selected_date = datetime.datetime(year, month, day)
+		selected_date = datetime(year, month, day)
 		the_day_after = selected_date + datetime.timedelta(days=1)
 
 	images = mongo.db.articlesCollection.find(
@@ -84,13 +84,41 @@ def run2(command):
 
 	return redirect('/',302,None)
 
+@app.route('/articles')
+def articles():
+	count = request.args.get('Count')
+
+	start_date = request.args.get('StartDate')
+	if count is None:
+		count = 50
+	else:
+		count = int(count)
+
+	if start_date is None:
+		raise Exception("Invalid StartDate")
+
+	images = list ( mongo.db.articlesCollection.find(
+			{"time_of_insert_iso": {"$lt":start_date} },
+			{"title":1, "_id":1, "local_thumbnail":1, "url":1, "time_of_insert_iso":1} ).sort("_id", -1).limit(count) )
+	
+	# print (  images[-1]["time_of_insert_iso"] )
+
+	next_start_date = ""
+	if (len(images) > 0 ):
+		next_start_date = images[-1]["time_of_insert_iso"]
+
+	newspapers = mongo.db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
+	
+	return render_template('gallery_images.html', images=images, newspapers=newspapers, start_date=start_date , next_start_date=next_start_date  )
 
 @app.route('/')
 def main():
-	# flash('Testing FLASH FLASK')	
+	flash('Testing FLASH FLASK')	
 	images = mongo.db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
 	newspapers = mongo.db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
-	return render_template('main.html', images=images, newspapers=newspapers)
+	next_start_date = datetime.now().isoformat()
+
+	return render_template('main.html', images=images, newspapers=newspapers, next_start_date=next_start_date)
 
 
 def fetch_start():
