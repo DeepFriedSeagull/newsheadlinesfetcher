@@ -117,13 +117,33 @@ class Website():
 			# print("Article already in the db: " + exist_article["title"])
 			pass
 
+
+# Max length of file is 256 on windows
+# Taking some marge limiting on 240
+def truncated_basename( remote_path ):
+
+	basename = os.path.basename( urlparse(remote_path).path )
+	filename =  os.path.splitext( basename )[0]
+	extension = os.path.splitext( basename)[1]
+
+	dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"static")
+	full_path = os.path.join( dir_path, basename)
+
+	if ( len(full_path)  > 240 ):
+		idx_max = 240 - len(dir_path) - len(extension)
+		result_name = filename[:idx_max] + extension
+		return result_name
+	return basename
+
+
 def get_imagedb_local_path( remote_path ):
-	image_local_path = os.path.basename( urlparse(remote_path).path )
+	image_local_path = truncated_basename(remote_path)
 	image_local_path = os.path.join( "images_db", image_local_path)
 	return image_local_path
 
+
 def get_imagedb_local_thumbnail_path( remote_path ):
-	thumbnail_path = os.path.splitext( os.path.basename( urlparse(remote_path).path ))[0]+ ".png"
+	thumbnail_path = os.path.splitext( os.path.basename( urlparse(truncated_basename(remote_path)).path ))[0]+ ".png"
 	size_folder = 'x'.join(map(str, Website.thumbnail_size))
 	destination_folder = os.path.join( "images_db", size_folder )
 	thumbnail_path = os.path.join(destination_folder, thumbnail_path)
@@ -132,34 +152,40 @@ def get_imagedb_local_thumbnail_path( remote_path ):
 
 def fetch_image( remote_path ):
 	image_local_path = get_imagedb_local_path(remote_path)
-	image_local_path = os.path.join( "static", image_local_path)
+	image_local_path = os.path.join( "newsheadlinesfetcher", "static", image_local_path)
+
+	print(" Fetching: " + remote_path +" To: "+image_local_path)
 	if (not os.path.isfile(image_local_path)):
 		r = requests.get(remote_path, stream=True)
 		if r.status_code == 200:
 			with open(image_local_path, 'wb') as f:
 				for chunk in r:
 					f.write(chunk)
-			# print( "File correctly downloaded ")
+			print( "File correctly downloaded ")
 	else:
-		# print("File already downloaded")
+		print("File already downloaded")
 		pass
 
+
 def create_thumbnail(remote_path):
-	infile = os.path.join( "static", get_imagedb_local_path(remote_path))
-	outfile = os.path.join( "static", get_imagedb_local_thumbnail_path(remote_path))
+	infile = os.path.join( "newsheadlinesfetcher", "static", get_imagedb_local_path(remote_path))
+	outfile = os.path.join( "newsheadlinesfetcher", "static", get_imagedb_local_thumbnail_path(remote_path))
 	if (not os.path.isfile(outfile) ):
 		try:
 			im = Image.open(infile)
 			im.thumbnail(Website.thumbnail_size)
 			im.save(outfile, "PNG")
 		except IOError:
-			print("cannot create thumbnail for", infile)
+			print("cannot create thumbnail for " + infile + "=>" + outfile)
 
 
-def fecth_images_from_db():
+# Useful if your deleted your local image_db
+def fecth_images_from_db_and_create_thumbnail():
 	articles = Website.articles_collection.find({})
 	for article in articles:
 		fetch_image( article["top_image"] )
+		create_thumbnail( article["top_image"] )
+
 
 def add_local_path():
 	print("Adding local path: START")
@@ -214,6 +240,7 @@ def main_exec():
 			print("Problem with " + website.newspaper_name)
 			print (str(e))
 
+
 def create_thumbnails(size):
 	origin_folder = os.path.join("static", "images_db")
 
@@ -246,4 +273,4 @@ def create_thumbnails_120():
 	create_thumbnails((120,120))
 
 if __name__ == "__main__":
-	remove_static_from_db()
+	fecth_images_from_db_and_create_thumbnail()
