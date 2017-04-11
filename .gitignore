@@ -3,11 +3,15 @@ dev*/
 
 __pycache__/
 
-static/images_db/
+newsheadlinesfetcher/__pycache__/
 
-newsheadlinesfetcher\.sublime-project
+newsheadlinesfetcher/static/images_db/
 
-newsheadlinesfetcher\.sublime-workspace
+newsheadlinesfetcher.egg-info/
+
+newsheadlinesfetcher.sublime-project
+
+newsheadlinesfetcher.sublime-workspace
 
 nohup.out
 

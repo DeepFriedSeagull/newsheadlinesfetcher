@@ -1,3 +1,5 @@
+from newsheadlinesfetcher import app
+
 import time
 import atexit
 import os
@@ -6,29 +8,12 @@ from datetime import datetime
 from urllib.parse import urlparse
 from flask import Flask, render_template, flash, redirect, request, send_from_directory
 from flask.ext.pymongo import PyMongo
-import livefetch
+# from flask_pymongo import Pymongo
+import newsheadlinesfetcher.livefetch
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-# from apscheduler.scheduler import Scheduler
 
-
-
-# def test_scheduler():
-# 	print (TEST)
-# 	print (time.time())
-
-
-# sched = Scheduler()
-# sched.add_interval_job(test_scheduler, seconds=5)
-# sched.start()
-
-
-# from flask_pymongo import Pymongo
-
-app = Flask(__name__,static_folder='static',static_path='')
-app.config["MONGO_DBNAME"]="livefetch"
-app.secret_key = 'dZjBgu6vwAH5z16q1DygCSsvPbsPzqL89GNY7Oyj7e3vyg4ORrhoxiq6AJhtjKJ9'
 mongo = PyMongo(app)
 
 
