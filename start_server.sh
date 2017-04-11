@@ -5,4 +5,4 @@ ln -sf flask.log.$current_time flask.log
 nohup mongod --config ./mongod.conf --logpath mongod.log.$current_time </dev/null >/dev/null 2>&1 &
 export FLASK_APP=newsheadlinesfetcher
 # export FLASK_DEBUG=1
-source dev/bin/activate ; pip install . ; nohup flask run >flask.log.$current_time 2>&1 &
+source dev/bin/activate ; pip install -e . ; nohup flask run >flask.log.$current_time 2>&1 &
