@@ -7,15 +7,21 @@ import os
 from datetime import datetime
 from urllib.parse import urlparse
 from flask import Flask, render_template, flash, redirect, request, send_from_directory
-from flask.ext.pymongo import PyMongo
+
+# from flask.ext.pymongo import PyMongo
 # from flask_pymongo import Pymongo
+from pymongo import MongoClient
+
 import newsheadlinesfetcher.livefetch
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
+import newsheadlinesfetcher.generate_cloud_image
 
-mongo = PyMongo(app)
 
+# mongo = PyMongo(app)
+mongo_client = MongoClient()
+db = mongo_client.livefetch
 
 @app.route('/log/<name>')
 def log(name):
@@ -24,7 +30,7 @@ def log(name):
 
 @app.route('/newspaper/<newspaper>')
 def newspaper(newspaper):
-	images = mongo.db.articlesCollection.find({"origin":newspaper}, 
+	images = db.articlesCollection.find({"origin":newspaper}, 
 		{"local_thumbnail":1, "_id":0, "url":1, "title":1 } ).sort("_id", -1)
 	return render_template('newspaper.html', images=images, newspaper_name=newspaper)
 
@@ -33,7 +39,6 @@ def newspaper(newspaper):
 @app.route('/<int:year>/<int:month>')
 @app.route('/<int:year>/<int:month>/<int:day>')
 def per_date(year,month=-1,day=-1):
-
 	if month == -1:
 		selected_date = datetime(year, 1, 1)
 		the_day_after = selected_date + datetime.timedelta(years=1)
@@ -44,7 +49,7 @@ def per_date(year,month=-1,day=-1):
 		selected_date = datetime(year, month, day)
 		the_day_after = selected_date + datetime.timedelta(days=1)
 
-	images = mongo.db.articlesCollection.find(
+	images = db.articlesCollection.find(
 		{"time_of_insert_iso":
 			# {"$gte": "2017-03-21T15:35:49.299462"}},
 			{"$gte": selected_date.isoformat(), "$lt":the_day_after.isoformat()}},
@@ -81,8 +86,7 @@ def articles():
 
 	if start_date is None:
 		raise Exception("Invalid StartDate")
-
-	images = list ( mongo.db.articlesCollection.find(
+	images = list ( db.articlesCollection.find(
 			{"time_of_insert_iso": {"$lt":start_date} },
 			{"title":1, "_id":1, "local_thumbnail":1, "url":1, "time_of_insert_iso":1} ).sort("_id", -1).limit(count) )
 	
@@ -92,18 +96,20 @@ def articles():
 	if (len(images) > 0 ):
 		next_start_date = images[-1]["time_of_insert_iso"]
 
-	newspapers = mongo.db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
+	newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
 	
 	return render_template('gallery_images.html', images=images, newspapers=newspapers, start_date=start_date , next_start_date=next_start_date  )
 
 @app.route('/')
 def main():
 	flash('Testing FLASH FLASK')	
-	images = mongo.db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
-	newspapers = mongo.db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
-	next_start_date = datetime.now().isoformat()
 
+	images = db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
+	newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
+	next_start_date = datetime.now().isoformat()
+	
 	return render_template('main.html', images=images, newspapers=newspapers, next_start_date=next_start_date)
+	
 
 
 def fetch_start():
