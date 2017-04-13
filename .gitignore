@@ -1,6 +1,8 @@
 
 dev*/
 
+logs/
+
 __pycache__/
 
 newsheadlinesfetcher/__pycache__/
@@ -13,8 +15,3 @@ newsheadlinesfetcher.sublime-project
 
 newsheadlinesfetcher.sublime-workspace
 
-nohup.out
-
-mongod.log*
-
-flask.log*
