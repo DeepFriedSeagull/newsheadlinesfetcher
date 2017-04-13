@@ -16,8 +16,9 @@ with codecs.open(os.path.join(os.path.dirname(__file__), 'stop_words.txt'),'r',e
     local_stop_words = set([x.strip() for x in file_content.split('\n')])
 
 # Generate a word cloud image
-def generate_image_cloud(text):
+def generate_image_cloud(array_titles):
 	#removing ponctuation
+	text = ' '.join(array_titles)
 	punctuation_to_remove = string.punctuation.translate(str.maketrans('', '','\''))
 	text = text.translate(str.maketrans("", "", punctuation_to_remove))
 
@@ -53,12 +54,11 @@ def filter_title_by_candidates(title):
 			return True
 	return False
 
-def fetch_titles_from_db():
+def fetch_filtered_titles_from_db():
 	titles_list = list( db.articlesCollection.find({}, { "_id":0, "title":1 } ) )
 	str_titles = [normalize_caseless(title_dic["title"]) for title_dic in titles_list if "title" in title_dic]
-	str_titles = filter( filter_title_by_candidates, str_titles)
-	str_titles = ' '.join(str_titles)
+	str_titles = list( filter( filter_title_by_candidates, str_titles) )
 	return str_titles
 
 if __name__ == '__main__':
-	generate_image_cloud( fetch_titles_from_db() )
+	generate_image_cloud( fetch_filtered_titles_from_db() )

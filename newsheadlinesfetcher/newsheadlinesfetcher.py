@@ -80,7 +80,7 @@ def articles():
 
 	start_date = request.args.get('StartDate')
 	if count is None:
-		count = 50
+		count = 80
 	else:
 		count = int(count)
 
@@ -104,13 +104,17 @@ def articles():
 def main():
 	flash('Testing FLASH FLASK')	
 
+
 	images = db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
 	newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
 	next_start_date = datetime.now().isoformat()
-	
-	return render_template('main.html', images=images, newspapers=newspapers, next_start_date=next_start_date)
+	acticles_number = db.articlesCollection.count();
 	
 
+	political_articles = len( newsheadlinesfetcher.generate_cloud_image.fetch_filtered_titles_from_db() )
+	
+	return render_template('main.html', images=images, newspapers=newspapers, 
+		next_start_date=next_start_date, acticles_number=acticles_number, political_articles=political_articles )
 
 def fetch_start():
 	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))

@@ -8,7 +8,7 @@
 </head>
 <body>
 	<h1>News Headline Fetcher{% block title %}{% endblock %}</h1>
-
+	<h2>{{acticles_number}} Articles in store: {{political_articles}} </h2>
 	{% block flash_messages %}
 	{% for message in get_flashed_messages() %}
 		<div id=flash_messages>
