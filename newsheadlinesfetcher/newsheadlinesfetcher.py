@@ -19,7 +19,7 @@ mongo = PyMongo(app)
 
 @app.route('/log/<name>')
 def log(name):
-	return send_from_directory( '', name, mimetype='text/txt' )
+	return send_from_directory( app.config["LOG_FOLDER"], name, mimetype='text/txt' )
 
 
 @app.route('/newspaper/<newspaper>')
@@ -108,7 +108,7 @@ def main():
 
 def fetch_start():
 	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))
-	livefetch.main_exec()
+	newsheadlinesfetcher.livefetch.main_exec()
 	print(time.strftime("Finishing Fetching: %A, %d. %B %Y %I:%M:%S %p"))
 	# flash( time.strftime("Last Update: %I:%M:%S"))
 	
