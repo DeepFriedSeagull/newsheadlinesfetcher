@@ -3,6 +3,14 @@ dev*/
 
 logs/
 
+Pictures/
+
+aligned-images/
+
+generated-embeddings/
+
+test*.jpg
+
 __pycache__/
 
 newsheadlinesfetcher/__pycache__/
