@@ -1,7 +1,12 @@
+build/
+ 
+dist/
 
 dev*/
 
 logs/
+
+test*.jpg
 
 __pycache__/
 
@@ -14,4 +19,3 @@ newsheadlinesfetcher.egg-info/
 newsheadlinesfetcher.sublime-project
 
 newsheadlinesfetcher.sublime-workspace
-
