@@ -7,8 +7,9 @@
 	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/bootstrap-3.3.7-theme.min.css') }}">
 </head>
 <body>
-	<h1>News Headline Fetcher{% block title %}{% endblock %}</h1>
-	<h2>{{acticles_number}} Articles in store: {{political_articles}} </h2>
+	<h1><a href="/">News Headline Fetcher</a>{% block title %}{% endblock %}</h1>
+	<!-- <h2>{{acticles_number}} Articles in store: {{political_articles}} </h2> -->
+
 	{% block flash_messages %}
 	{% for message in get_flashed_messages() %}
 		<div id=flash_messages>
@@ -46,6 +47,7 @@
 	<div id="gallery_images">
 		{% block gallery_images %}
 		<span id="next_start_date" next_start_date="{{next_start_date}}"></span>
+		<span id="newspaper_filter" newspaper_filter="{{newspaper_filter}}"></span>
 		{% endblock gallery_images%}
 	</div>
 
@@ -57,11 +59,19 @@
 
 		function performAJAX() {
 			next_start_date = $("#next_start_date").attr("next_start_date");
+			newspaper_filter = $("#newspaper_filter").attr("newspaper_filter");
+
 			if ( next_start_date ) {
 				currently_updating = true;
-				$.ajax( {context: this, url:"/articles?StartDate="+next_start_date,success:function(result) {
+				url_to_request = "/articles?StartDate="+next_start_date
+
+				if ( newspaper_filter )
+					url_to_request += "&newspaper_filter="+newspaper_filter
+
+				$.ajax( {context: this, url: url_to_request, success:function(result) {
 					$("#start_date").remove();
 					$("#next_start_date").remove();
+					$("#newspaper_filter").remove();
 					$(result).appendTo("#gallery_images");
 					console.log("ajax done")
 					this.currently_updating = false;
