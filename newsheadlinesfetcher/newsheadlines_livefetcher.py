@@ -1,4 +1,3 @@
-
 import requests
 import newspaper
 import pymongo
@@ -47,7 +46,7 @@ class Website_Parser():
 class Website_Fetcher():
 	# Class variable :ie shared
 	clientMongo = MongoClient('localhost', 27017)
-	db = clientMongo.livefetch
+	db = clientMongo.livefetch_test1
 	images_collection = db.imagesCollection
 	articles_collection = db.articlesCollection
 	newspapers_collection = db.newspapersCollection
@@ -134,11 +133,11 @@ class Website_Fetcher():
 		]
 
 		for website in websites:
-			try:
+			# try:
 				website.fetch_main_article()
-			except Exception as e:
-				print("Problem with " + website.newspaper_name)
-				print (str(e))
+			# except Exception as e:
+			# 	print("Problem with " + website.newspaper_name)
+			# 	print (str(e))
 
 
 
@@ -170,7 +169,7 @@ def get_imagedb_local_path( remote_path ):
 
 def get_imagedb_local_thumbnail_path( remote_path ):
 	thumbnail_path = os.path.splitext( os.path.basename( urlparse(truncated_basename(remote_path)).path ))[0]+ ".png"
-	size_folder = 'x'.join(map(str, Website.thumbnail_size))
+	size_folder = 'x'.join(map(str, Website_Fetcher.thumbnail_size))
 	destination_folder = os.path.join( "images_db", size_folder )
 	thumbnail_path = os.path.join(destination_folder, thumbnail_path)
 	return thumbnail_path
@@ -199,7 +198,7 @@ def create_thumbnail(remote_path):
 	if (not os.path.isfile(outfile) ):
 		try:
 			im = Image.open(infile)
-			im.thumbnail(Website.thumbnail_size)
+			im.thumbnail(Website_Fetcher.thumbnail_size)
 			im.save(outfile, "PNG")
 		except IOError:
 			print("cannot create thumbnail for " + infile + "=>" + outfile)
@@ -207,7 +206,7 @@ def create_thumbnail(remote_path):
 
 # Useful if your deleted your local image_db
 def fecth_images_from_db_and_create_thumbnail():
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
 		fetch_image( article["top_image"] )
 		create_thumbnail( article["top_image"] )
@@ -215,17 +214,17 @@ def fecth_images_from_db_and_create_thumbnail():
 
 def add_local_path():
 	print("Adding local path: START")
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
-		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
+		result = Website_Fetcher.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
 	print("Adding local path: END")
 
 
 def add_local_thumbnails():
 	print("Adding local thumbnail path: START")
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
-		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
+		result = Website_Fetcher.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
 	print("Adding local thumbnail path: END")
 
 def remove_static_from_db():
@@ -264,4 +263,4 @@ def create_thumbnails_120():
 	create_thumbnails((120,120))
 
 if __name__ == "__main__":
-	Website.main_exec()
+	Website_Fetcher.main_exec()
