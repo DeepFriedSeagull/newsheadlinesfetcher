@@ -43,6 +43,11 @@ class Website_Parser():
 
 		return article_top_url
 
+
+"""
+Website_Fetcher: fetch data from listed website in 
+main_exec and store the data to the db with fetch_main_article
+"""
 class Website_Fetcher():
 	# Class variable :ie shared
 	clientMongo = MongoClient('localhost', 27017)
@@ -133,20 +138,16 @@ class Website_Fetcher():
 		]
 
 		for website in websites:
-			# try:
+			try:
 				website.fetch_main_article()
-			# except Exception as e:
-			# 	print("Problem with " + website.newspaper_name)
-			# 	print (str(e))
-
-
-
+			except Exception as e:
+				print("Problem with " + website.newspaper_name)
+				print (str(e))
 
 
 # Max length of file is 256 on windows
 # Taking some marge limiting on 240
 def truncated_basename( remote_path ):
-
 	basename = os.path.basename( urlparse(remote_path).path )
 	filename =  os.path.splitext( basename )[0]
 	extension = os.path.splitext( basename)[1]
