@@ -11,7 +11,7 @@ import codecs
 mongo_client = MongoClient()
 db = mongo_client.livefetch
 
-with codecs.open(os.path.join(os.path.dirname(__file__), 'stop_words.txt'),'r',encoding='utf8') as f:
+with codecs.open(os.path.join(os.path.dirname(__file__), 'data','stop_words.txt'),'r',encoding='utf8') as f:
     file_content = f.read()
     local_stop_words = set([x.strip() for x in file_content.split('\n')])
 

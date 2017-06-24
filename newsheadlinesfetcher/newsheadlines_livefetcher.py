@@ -1,4 +1,3 @@
-
 import requests
 import newspaper
 import pymongo
@@ -12,8 +11,13 @@ from newspaper import Article
 from pymongo import MongoClient
 from PIL import Image
 
-
-class Soup_Parser():
+"""
+Define a specific parser for a website: 
+It tries to find the correct tag depending on the arguments.
+Multiples tags/classes/ids combinations can be provided in ordrer to search in DOM tree
+Once found it returns it's first <a> child
+"""
+class Website_Parser():
 	def __init__(self, tag_names, class_names=[], id_names=[]):
 		self.tag_names = tag_names
 		self.id_names = id_names
@@ -23,19 +27,6 @@ class Soup_Parser():
 		article_top = main_page_soup
 
 		for tag_name, id_name, class_name in itertools.zip_longest(self.tag_names, self.id_names, self.class_names):
-			# print (tag_name, id_name, class_name)
-			# print( article_top )
-
-
-			# if ( id_name and class_name):
-			# 	article_top = article_top.find(tag_name, id=id_name, class_=class_name)
-			# elif (id_name):
-			# 	article_top = article_top.find(tag_name, id=id_name)
-			# elif (class_name):	
-			# 	article_top = article_top.find(tag_name, class_=class_name)
-			# else:
-			# 	article_top = article_top.find(tag_name)
-
 			find_attributes={}
 			if id_name is not None:
 				find_attributes.update({"id":id_name})
@@ -44,9 +35,6 @@ class Soup_Parser():
 
 			article_top = article_top.find(tag_name, attrs=find_attributes)
 
-			# print( "done" )
-			# print( article_top )
-			# print( "done2" )
 
 		article_top_url = article_top.find("a")['href']
 
@@ -55,10 +43,15 @@ class Soup_Parser():
 
 		return article_top_url
 
-class Website():
+
+"""
+Website_Fetcher: fetch data from listed website in 
+main_exec and store the data to the db with fetch_main_article
+"""
+class Website_Fetcher():
 	# Class variable :ie shared
 	clientMongo = MongoClient('localhost', 27017)
-	db = clientMongo.livefetch
+	db = clientMongo.livefetch_test1
 	images_collection = db.imagesCollection
 	articles_collection = db.articlesCollection
 	newspapers_collection = db.newspapersCollection
@@ -118,11 +111,44 @@ class Website():
 			# print("Article already in the db: " + exist_article["title"])
 			pass
 
+	def main_exec():
+		websites = [
+			# Press Payante
+			Website_Fetcher( "Le Monde", "http://mobile.lemonde.fr", Website_Parser(["main"]) ),
+			Website_Fetcher( "Le Figaro", "http://www.lefigaro.fr", Website_Parser(["section"]) ),
+			Website_Fetcher( "Le Parisien", "http://m.leparisien.fr", Website_Parser(["article"]) ),
+			Website_Fetcher( "Les Echos", "http://www.lesechos.fr", Website_Parser(["article"]) ),
+			Website_Fetcher( "La Croix", "http://www.la-croix.com", Website_Parser(["div"], ["main-article"]) ),
+			Website_Fetcher( "Liberation", "http://www.liberation.fr", Website_Parser(["article"]) ),
+			Website_Fetcher( "L'Humanite", "http://www.humanite.fr", Website_Parser(["div","li"],[None,"first"], ["content",None]) ),		
+			# Press Gratuite
+			Website_Fetcher( "20 minutes", "http://www.20minutes.fr", Website_Parser(["article"]) ),
+			Website_Fetcher( "CNews matin", "http://www.cnewsmatin.fr", Website_Parser(["div"], [None], ["main-content"]) ),
+			# Pure player
+			Website_Fetcher( "Mediapart", "http://www.mediapart.fr", Website_Parser(["div","h3"], ["une-block", "title" ]) ),
+			# tf1 WTFFFFF
+			Website_Fetcher( "BFMTV", "http://www.bfmtv.com", Website_Parser(["article"]) ),
+			Website_Fetcher( "LCI", "http://www.lci.fr", Website_Parser(["div"],["article-xl-block-topic"]) ),
+			Website_Fetcher( "France Info", "http://www.francetvinfo.fr", Website_Parser(["article"]) ),
+			Website_Fetcher( "Rue 89", "http://www.rue89.com", Website_Parser(["article"]) ),
+			# http://www.agoravox.fr/?page=home14_unes --Website_Fetcher( "Agoravox", "http://www.agoravox.fr", Website_Parser(["div"],[None],["unes"]) ),
+			
+			# atlantico
+			Website_Fetcher( "Atlantico", "http://www.atlantico.fr", Website_Parser(["div"],[],["cover"]) ),
+			
+		]
+
+		for website in websites:
+			try:
+				website.fetch_main_article()
+			except Exception as e:
+				print("Problem with " + website.newspaper_name)
+				print (str(e))
+
 
 # Max length of file is 256 on windows
 # Taking some marge limiting on 240
 def truncated_basename( remote_path ):
-
 	basename = os.path.basename( urlparse(remote_path).path )
 	filename =  os.path.splitext( basename )[0]
 	extension = os.path.splitext( basename)[1]
@@ -145,7 +171,7 @@ def get_imagedb_local_path( remote_path ):
 
 def get_imagedb_local_thumbnail_path( remote_path ):
 	thumbnail_path = os.path.splitext( os.path.basename( urlparse(truncated_basename(remote_path)).path ))[0]+ ".png"
-	size_folder = 'x'.join(map(str, Website.thumbnail_size))
+	size_folder = 'x'.join(map(str, Website_Fetcher.thumbnail_size))
 	destination_folder = os.path.join( "images_db", size_folder )
 	thumbnail_path = os.path.join(destination_folder, thumbnail_path)
 	return thumbnail_path
@@ -174,7 +200,7 @@ def create_thumbnail(remote_path):
 	if (not os.path.isfile(outfile) ):
 		try:
 			im = Image.open(infile)
-			im.thumbnail(Website.thumbnail_size)
+			im.thumbnail(Website_Fetcher.thumbnail_size)
 			im.save(outfile, "PNG")
 		except IOError:
 			print("cannot create thumbnail for " + infile + "=>" + outfile)
@@ -182,7 +208,7 @@ def create_thumbnail(remote_path):
 
 # Useful if your deleted your local image_db
 def fecth_images_from_db_and_create_thumbnail():
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
 		fetch_image( article["top_image"] )
 		create_thumbnail( article["top_image"] )
@@ -190,57 +216,22 @@ def fecth_images_from_db_and_create_thumbnail():
 
 def add_local_path():
 	print("Adding local path: START")
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
-		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
+		result = Website_Fetcher.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_top_image": get_imagedb_local_path(article["top_image"])}})
 	print("Adding local path: END")
+
 
 def add_local_thumbnails():
 	print("Adding local thumbnail path: START")
-	articles = Website.articles_collection.find({})
+	articles = Website_Fetcher.articles_collection.find({})
 	for article in articles:
-		result = Website.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
+		result = Website_Fetcher.articles_collection.update_one( {"_id": article["_id"]}, {'$set':{"local_thumbnail": get_imagedb_local_thumbnail_path(article["top_image"])}})
 	print("Adding local thumbnail path: END")
-
 
 def remove_static_from_db():
 	add_local_path()
 	add_local_thumbnails()
-
-def main_exec():
-	websites = [
-		# Press Payante
-		Website( "Le Monde", "http://mobile.lemonde.fr", Soup_Parser(["main"]) ),
-		Website( "Le Figaro", "http://www.lefigaro.fr", Soup_Parser(["section"]) ),
-		Website( "Le Parisien", "http://m.leparisien.fr", Soup_Parser(["article"]) ),
-		Website( "Les Echos", "http://www.lesechos.fr", Soup_Parser(["article"]) ),
-		Website( "La Croix", "http://www.la-croix.com", Soup_Parser(["div"], ["main-article"]) ),
-		Website( "Liberation", "http://www.liberation.fr", Soup_Parser(["article"]) ),
-		Website( "L'Humanite", "http://www.humanite.fr", Soup_Parser(["div","li"],[None,"first"], ["content",None]) ),		
-		# Press Gratuite
-		Website( "20 minutes", "http://www.20minutes.fr", Soup_Parser(["article"]) ),
-		Website( "CNews matin", "http://www.cnewsmatin.fr", Soup_Parser(["div"], [None], ["main-content"]) ),
-		# Pure player
-		Website( "Mediapart", "http://www.mediapart.fr", Soup_Parser(["div","h3"], ["une-block", "title" ]) ),
-		# tf1 WTFFFFF
-		Website( "BFMTV", "http://www.bfmtv.com", Soup_Parser(["article"]) ),
-		Website( "LCI", "http://www.lci.fr", Soup_Parser(["div"],["article-xl-block-topic"]) ),
-		Website( "France Info", "http://www.francetvinfo.fr", Soup_Parser(["article"]) ),
-		Website( "Rue 89", "http://www.rue89.com", Soup_Parser(["article"]) ),
-		# http://www.agoravox.fr/?page=home14_unes --Website( "Agoravox", "http://www.agoravox.fr", Soup_Parser(["div"],[None],["unes"]) ),
-		
-		# atlantico
-		Website( "Atlantico", "http://www.atlantico.fr", Soup_Parser(["div"],[],["cover"]) ),
-		
-	]
-
-	for website in websites:
-		try:
-			website.fetch_main_article()
-		except Exception as e:
-			print("Problem with " + website.newspaper_name)
-			print (str(e))
-
 
 def create_thumbnails(size):
 	origin_folder = os.path.join("static", "images_db")
@@ -274,4 +265,4 @@ def create_thumbnails_120():
 	create_thumbnails((120,120))
 
 if __name__ == "__main__":
-	fecth_images_from_db_and_create_thumbnail()
+	Website_Fetcher.main_exec()

@@ -3,7 +3,6 @@ chcp 65001
 
 rem Starting MongoDB Server
 set PATH=%PATH%;"C:\Program Files\MongoDB\Server\3.4\bin"
-rem start mongod.exe --dbpath "%~dp0images_db"
 start mongod.exe --dbpath "D:\work\mongodb"
 
 

@@ -1,8 +1,8 @@
-dev*/
-
 build/
-
+ 
 dist/
+
+dev*/
 
 logs/
 
@@ -25,4 +25,3 @@ newsheadlinesfetcher.egg-info/
 newsheadlinesfetcher.sublime-project
 
 newsheadlinesfetcher.sublime-workspace
-
