@@ -10,8 +10,8 @@ from flask import Flask, render_template, flash, redirect, request, send_from_di
 
 from pymongo import MongoClient
 
-import newsheadlinesfetcher.livefetch
-import newsheadlinesfetcher.generate_cloud_image
+import newsheadlinesfetcher.newsheadlines_livefetcher
+import newsheadlinesfetcher.newsheadlines_cloudgenerator
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -30,7 +30,7 @@ def main():
 	# images = db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
 	# newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
 	# acticles_number = db.articlesCollection.count();
-	# political_articles = len( newsheadlinesfetcher.generate_cloud_image.fetch_filtered_titles_from_db() )
+	# political_articles = len( newsheadlinesfetcher.cloudgenerator.fetch_filtered_titles_from_db() )
 	# acticles_number=acticles_number, political_articles=political_articles  
 
 	newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
@@ -115,20 +115,22 @@ def articles():
 # Tools routes 
 @app.route('/run')
 def run():
-	livefetch.main_exec()
+	newsheadlines_livefetcher.Website_Fecther.main_exec()
 	return redirect('/',302,None)
 
+# http://localhost:5000/run/fetch_image?param=http://next.liberation.fr/culture-next/2017/04/06/et-si-les-ados-osaient-la-politique_1556995
 # http://localhost:5000/run/fetch_image?param=https://www.mediapart.fr/journal/international/290317/brexit-les-grands-travaux-ne-font-que-commencer
 @app.route('/run/<command>')
 def run2(command):
 	param=request.args.get('param')
 	print( param )
 	if param is not None:
-		result = getattr(livefetch,command)(param)
+		result = getattr(newsheadlinesfetcher.newsheadlines_livefetcher,command)(param)
 	else:
-		result = getattr(livefetch,command)()
+		result = getattr(newsheadlinesfetcher.newsheadlines_livefetcher,command)()
 	return redirect('/',302,None)
 
+# http://localhost:5000/log/flask.log
 @app.route('/log/<name>')
 def log(name):
 	return send_from_directory( app.config["LOG_FOLDER"], name, mimetype='text/txt' )
@@ -136,7 +138,7 @@ def log(name):
 
 def fetch_start():
 	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))
-	newsheadlinesfetcher.livefetch.Website_Fecther.main_exec()
+	newsheadlinesfetcher.newsheadlines_livefetcher.Website_Fecther.main_exec()
 	print(time.strftime("Finishing Fetching: %A, %d. %B %Y %I:%M:%S %p"))
 
 

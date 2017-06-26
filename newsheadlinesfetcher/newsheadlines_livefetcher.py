@@ -96,6 +96,7 @@ class Website_Fetcher():
 				"local_thumbnail" : get_imagedb_local_thumbnail_path(article.top_image),
 				# "date_of_publication" :,
 				"time_of_insert_iso" : datetime.datetime.now().isoformat(),
+				"TOI" : datetime.datetime.utcnow(),
 				"summary": article.summary,
 				"tags" : article.keywords
 			})
