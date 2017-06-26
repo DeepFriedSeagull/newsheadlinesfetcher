@@ -11,7 +11,7 @@ from flask import Flask, render_template, flash, redirect, request, send_from_di
 from pymongo import MongoClient
 
 import newsheadlinesfetcher.newsheadlines_livefetcher
-import newsheadlinesfetcher.generate_cloud_image
+import newsheadlinesfetcher.newsheadlines_cloudgenerator
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -30,7 +30,7 @@ def main():
 	# images = db.articlesCollection.find({}, {"title":1, "_id":1, "local_thumbnail":1, "url":1} ).sort("_id", -1)
 	# newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
 	# acticles_number = db.articlesCollection.count();
-	# political_articles = len( newsheadlinesfetcher.generate_cloud_image.fetch_filtered_titles_from_db() )
+	# political_articles = len( newsheadlinesfetcher.cloudgenerator.fetch_filtered_titles_from_db() )
 	# acticles_number=acticles_number, political_articles=political_articles  
 
 	newspapers = db.newspapersCollection.find({}, {"name":1, "_id":0, "url":1} ) 
