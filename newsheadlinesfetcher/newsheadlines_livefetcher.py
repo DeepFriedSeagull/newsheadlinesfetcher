@@ -55,7 +55,8 @@ class WebsiteFetcher():
 
 	# Class variable :ie shared
 	clientMongo = MongoClient('localhost', 27017)
-	db = clientMongo.livefetch_test1
+	db = clientMongo.livefetch
+	# db = clientMongo.livefetch_test1
 	images_collection = db.imagesCollection
 	articles_collection = db.articlesCollection
 	newspapers_collection = db.newspapersCollection
@@ -157,6 +158,7 @@ class WebsiteFetcher():
 
 
 #region Tools
+
 #############################
 # Tools
 ############################

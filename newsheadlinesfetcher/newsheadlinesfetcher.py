@@ -10,19 +10,24 @@ from flask import Flask, render_template, flash, redirect, request, send_from_di
 
 from pymongo import MongoClient
 
-import newsheadlinesfetcher.newsheadlines_livefetcher
-import newsheadlinesfetcher.newsheadlines_cloudgenerator
+# * so we can run all tools from the web url (oh dear security)
+from newsheadlinesfetcher import  newsheadlines_livefetcher 
+# import newsheadlinesfetcher.newsheadlines_livefetcher
+
+# import newsheadlinesfetcher.newsheadlines_cloudgenerator
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-
-# 1- Setting up routes 
-# 2- Setting up Tools routes
-# 3- Setting up main scheduller
+"""
+1- Setting up routes 
+2- Setting up Tools routes
+3- Setting up main scheduller
+"""
 
 mongo_client = MongoClient()
 db = mongo_client.livefetch
+# db = mongo_client.livefetch_test1
 
 
 @app.route('/')
@@ -73,15 +78,15 @@ def newspaper(newspaper):
 # 	return render_template('main.html', images=images)
 	
 
-"""Principal Route
-Db request is done here
-Agrs:
-# Count: Number of ruturned images
-# StartDate: Date that the article should be prior or egal to
-# newspaper_filter: Name of the newspaper we are interrested in
-"""
 @app.route('/articles')
 def articles():
+	"""Our "AJAX" hidden route ... most of uplifting is done here (ie db request)
+	Agrs:
+	# Count: Number of returned images
+	# StartDate: Date that the article should be prior or egal to
+	# newspaper_filter: Name of the newspaper we are interrested in
+	"""
+
 	count = request.args.get('Count')
 	start_date = request.args.get('StartDate')
 	newspaper_filter = request.args.get('newspaper_filter')
@@ -112,11 +117,20 @@ def articles():
 		start_date=start_date , next_start_date=next_start_date)
 
 
-# Tools routes 
+
+
+##############
+# Tools routes
+##############
+
 @app.route('/run')
 def run():
-	newsheadlines_livefetcher.Website_Fecther.main_exec()
+	newsheadlines_livefetcher.WebsiteFetcher.main_exec()
 	return redirect('/',302,None)
+
+
+# http://localhost:5000/run/create_thumbnail?param=http://mobile.lemonde.fr/proche-orient/article/2017/06/24/les-exigences-exorbitantes-du-front-anti-qatar_5150521_3218.html
+
 
 # http://localhost:5000/run/fetch_image?param=http://next.liberation.fr/culture-next/2017/04/06/et-si-les-ados-osaient-la-politique_1556995
 # http://localhost:5000/run/fetch_image?param=https://www.mediapart.fr/journal/international/290317/brexit-les-grands-travaux-ne-font-que-commencer
@@ -125,9 +139,9 @@ def run2(command):
 	param=request.args.get('param')
 	print( param )
 	if param is not None:
-		result = getattr(newsheadlinesfetcher.newsheadlines_livefetcher,command)(param)
+		result = getattr(newsheadlines_livefetcher,command)(param)
 	else:
-		result = getattr(newsheadlinesfetcher.newsheadlines_livefetcher,command)()
+		result = getattr(newsheadlines_livefetcher,command)()
 	return redirect('/',302,None)
 
 # http://localhost:5000/log/flask.log
@@ -136,10 +150,15 @@ def log(name):
 	return send_from_directory( app.config["LOG_FOLDER"], name, mimetype='text/txt' )
 
 
-def fetch_start():
-	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))
-	newsheadlinesfetcher.newsheadlines_livefetcher.Website_Fecther.main_exec()
-	print(time.strftime("Finishing Fetching: %A, %d. %B %Y %I:%M:%S %p"))
+
+##############
+# Scheduller
+#############
+
+# def fetch_start():
+# 	print(time.strftime("Starting Fetching: %A, %d. %B %Y %I:%M:%S %p"))
+# 	newsheadlines_livefetcher.WebsiteFetcher.main_exec()
+# 	print(time.strftime("Finishing Fetching: %A, %d. %B %Y %I:%M:%S %p"))
 
 
 # # Setting our scheduler
