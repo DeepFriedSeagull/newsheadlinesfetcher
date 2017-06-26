@@ -9,7 +9,7 @@ import string
 import codecs
 
 
-class Cloudgenerator():
+class CloudGenerator():
 	mongo_client = MongoClient()
 	db = mongo_client.livefetch
 	local_stop_words = set()
@@ -28,7 +28,7 @@ class Cloudgenerator():
 		# Getting stop words
 		stop_words = get_stop_words('french')
 		stop_words = set( stop_words )
-		stop_words |= Cloudgenerator.local_stop_words
+		stop_words |= CloudGenerator.local_stop_words
 		stop_words = [normalize_caseless(word) for word in stop_words]
 
 
@@ -58,10 +58,10 @@ def filter_title_by_candidates(title):
 	return False
 
 def fetch_filtered_titles_from_db():
-	titles_list = list( Cloudgenerator.db.articlesCollection.find({}, { "_id":0, "title":1 } ) )
+	titles_list = list( CloudGenerator.db.articlesCollection.find({}, { "_id":0, "title":1 } ) )
 	str_titles = [normalize_caseless(title_dic["title"]) for title_dic in titles_list if "title" in title_dic]
 	str_titles = list( filter( filter_title_by_candidates, str_titles) )
 	return str_titles
 
 if __name__ == '__main__':
-	Cloudgenerator.generate_image_cloud( fetch_filtered_titles_from_db() )
+	CloudGenerator.generate_image_cloud( fetch_filtered_titles_from_db() )
